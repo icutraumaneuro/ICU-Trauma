@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#c85a3f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ICU Trauma">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="ระบบจัดการเตียง ICU Trauma โรงพยาบาลยะลา">
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Apple Touch Icons -->
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+<!-- Apple Splash Screens (iOS ต้องการไฟล์แยกตามขนาดจอ ไม่ใช้ icon อัตโนมัติ) -->
+<link rel="apple-touch-startup-image" href="icons/splash-1170x2532.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="icons/splash-1284x2778.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="icons/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="icons/splash-1242x2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
+<link rel="apple-touch-startup-image" href="icons/splash-828x1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)">
+<link rel="apple-touch-startup-image" href="icons/splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+<link rel="apple-touch-startup-image" href="icons/splash-1668x2388.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)">
+<link rel="apple-touch-startup-image" href="icons/splash-2048x2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)">
+
+<title>ICU Trauma Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============ RESET & BASE ============ */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:Sarabun,sans-serif;background:#fdf5f0;color:#5c3a2e;font-size:15px;display:flex;flex-direction:column}
+
+/* ============ OFFLINE BANNER ============ */
+.offline-bar{background:#e06464;color:white;text-align:center;font-size:12px;font-weight:700;padding:5px;flex-shrink:0;display:none}
+.offline-bar.show{display:block}
+
+/* ============ HEADER ============ */
+.hdr{background:linear-gradient(135deg,#c85a3f 0%,#d97757 60%,#e08e6d 100%);padding:10px 16px;flex-shrink:0;box-shadow:0 3px 14px rgba(200,90,63,.35)}
+.hr{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.hico{width:42px;height:42px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid rgba(255,255,255,.25)}
+.htitle{color:white;font-weight:800;font-size:22px;letter-spacing:.2px}
+.hsub{color:#f3c4ac;font-size:13px}
+.hright{margin-left:auto;display:flex;gap:6px;align-items:center}
+.hlbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:700;cursor:pointer;font-family:Sarabun,sans-serif;touch-action:manipulation}
+
+/* ============ STATS ============ */
+.stats{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.stats::-webkit-scrollbar{display:none}
+.stat{border-radius:12px;padding:8px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0;background:white;border:none}
+.stat-num{font-size:28px;font-weight:900;font-family:monospace;line-height:1;color:#c85a3f}
+.stat-lbl{font-size:13px;font-weight:700;line-height:1.3;color:#e08e6d}
+
+/* ============ QUOTA BAR ============ */
+.quota-bar{display:flex;gap:8px;padding:10px 12px;background:#c85a3f;border-bottom:2px solid #d97757;flex-shrink:0}
+.quota-item{flex:1;border-radius:10px;padding:10px 12px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.quota-label{font-size:14px;font-weight:800;margin-bottom:5px}
+.quota-sx .quota-label{color:#c85a3f}
+.quota-neuro .quota-label{color:#b45309}
+.quota-track{height:10px;border-radius:99px;overflow:hidden}
+.quota-sx .quota-track{background:#fdeee6}
+.quota-neuro .quota-track{background:#fdf3d9}
+.quota-fill{height:100%;border-radius:99px;transition:width .4s}
+.quota-sx .quota-fill{background:#c85a3f}
+.quota-neuro .quota-fill{background:#e9c46a}
+.quota-count{font-size:15px;font-weight:800;margin-top:5px}
+.quota-sx .quota-count{color:#c85a3f}
+.quota-neuro .quota-count{color:#b45309}
+
+/* ============ TABS ============ */
+.tabs{display:flex;background:#c85a3f;border-bottom:2px solid #d97757;flex-shrink:0}
+.tab{flex:1;padding:11px 4px;background:none;border:none;border-bottom:3px solid transparent;color:rgba(255,255,255,.45);font-weight:600;font-size:13px;cursor:pointer;font-family:Sarabun,sans-serif;touch-action:manipulation}
+.tab.on{border-bottom-color:#e8a186;color:#e8a186;font-weight:800}
+
+.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 12px 80px}
+
+/* ============ BED CARDS ============ */
+.bed-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.bed-card{border-radius:16px;padding:14px;position:relative;cursor:pointer;transition:all .15s;touch-action:manipulation;border:none;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.bed-card:active{transform:scale(.97)}
+.bed-card.type-sx{background:linear-gradient(145deg,#f8fafb,#edf1f3);border-left:5px solid #94a3b8}
+.bed-card.type-neuro{background:linear-gradient(145deg,#fffdf0,#fef8d8);border-left:5px solid #e9c46a}
+.bed-card.empty-bed{background:linear-gradient(145deg,#f4fdf9,#e6f7f0);border-left:5px solid #e8a186}
+.bed-badge{position:absolute;top:10px;right:8px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px}
+.badge-sx{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+.badge-neuro{background:#fef9c3;color:#854d0e;border:1px solid #e9c46a}
+.bed-num{font-size:16px;font-weight:900;color:#d97757;margin-bottom:8px;letter-spacing:.5px}
+.bed-icon{font-size:32px;margin-bottom:8px}
+.bed-status{font-size:12px;font-weight:800;padding:4px 11px;border-radius:99px;display:inline-block;margin-bottom:8px;background:white}
+.bed-status-admit{color:#c04040}
+.bed-card.empty-bed .bed-status{color:#e08e6d}
+.bed-patient{font-weight:800;font-size:15px;line-height:1.4;margin-bottom:5px;color:#5c3a2e}
+.bed-doctor{font-size:13px;color:#4a7070;margin-bottom:4px}
+.bed-dx{font-size:13px;color:#d97757;font-weight:700;margin-bottom:3px;line-height:1.4}
+.bed-op{font-size:12px;color:#8a5a10;font-weight:600;line-height:1.4}
+.bed-empty-txt{font-size:15px;color:#e08e6d;font-weight:700;margin-top:6px}
+
+/* ============ QUEUE — RESPONSIVE HOSXP STYLE ============ */
+/* Mobile: form on top, table below */
+/* Tablet (≥700px): form left, table right */
+
+/* Override main for queue tab */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+#sec-bed{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 12px 80px;flex:1}
+#sec-queue{flex:1;overflow:hidden;display:none;flex-direction:column}
+
+/* QUEUE LAYOUT */
+.q-layout{flex:1;display:flex;flex-direction:column;overflow:hidden}
+@media(min-width:700px){
+  .q-layout{flex-direction:row}
+}
+
+/* FORM PANEL */
+.q-form{overflow-y:auto;-webkit-overflow-scrolling:touch;background:white;padding:14px;border-bottom:2px solid #f0d9cc;flex-shrink:0}
+@media(min-width:700px){
+  .q-form{width:290px;border-bottom:none;border-right:2px solid #f0d9cc}
+}
+.form-head{background:linear-gradient(135deg,#c85a3f,#e08e6d);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.form-head .ico{font-size:20px}
+.form-head .ftxt{color:white;font-weight:800;font-size:14px}
+.form-head .fsub{color:#f3c4ac;font-size:11px}
+.qfl{font-size:12px;font-weight:700;color:#e08e6d;margin-bottom:4px;display:block;margin-top:11px}
+.qfi{width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid #f0d9cc;font-size:14px;font-family:Sarabun,sans-serif;background:white;outline:none;color:#5c3a2e}
+.qfi:focus{border-color:#e08e6d}
+.qfr2{display:flex;gap:8px}
+.qfr2>div{flex:1}
+.qsubtn{width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#d97757,#e08e6d);color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif;margin-top:14px;box-shadow:0 4px 12px rgba(42,157,143,.3);touch-action:manipulation}
+.qcanbtn{width:100%;padding:11px;border-radius:12px;border:1.5px solid #f0d9cc;background:#fdf7f3;color:#e08e6d;font-size:13px;font-weight:700;cursor:pointer;font-family:Sarabun,sans-serif;margin-top:8px;touch-action:manipulation}
+.qwarn{background:#fdf6e3;border:1px solid #e9c46a;border-radius:10px;padding:9px 12px;font-size:12px;color:#8a6a10;margin-bottom:8px}
+
+/* TABLE PANEL */
+.q-table{flex:1;overflow:hidden;display:flex;flex-direction:column;background:#fdf5f0}
+.q-toolbar{padding:10px 14px;background:white;border-bottom:1px solid #f0d9cc;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.q-toolbar .qttl{font-weight:800;font-size:14px;color:#c85a3f}
+.q-filters{display:flex;gap:5px;flex-wrap:wrap}
+.qfb{padding:5px 12px;border-radius:99px;border:1.5px solid #eecbb8;background:white;color:#e08e6d;font-size:12px;font-weight:700;cursor:pointer;font-family:Sarabun,sans-serif;touch-action:manipulation}
+.qfb.on{background:#e08e6d;border-color:#e08e6d;color:white}
+.q-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px}
+
+/* DATE BLOCK */
+.date-block{margin-bottom:12px;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(13,79,79,.08)}
+.date-hdr{background:linear-gradient(135deg,#fdf1ea,#f0d9cc);padding:9px 14px;display:flex;align-items:center;gap:8px;border-bottom:1.5px solid #eecbb8}
+.date-hdr .dtxt{font-weight:800;font-size:14px;color:#c85a3f}
+.date-hdr .dbadge{background:#e08e6d;color:white;border-radius:99px;padding:2px 10px;font-size:11px;font-weight:800}
+.date-hdr .today-b{background:#e9c46a;color:#3a2a00;border-radius:99px;padding:1px 8px;font-size:10px;font-weight:800}
+.date-hdr .past-b{background:#f1f5f9;color:#94a3b8;border-radius:99px;padding:1px 8px;font-size:10px;font-weight:800}
+.date-hdr .dsum{margin-left:auto;font-size:11px;color:#a17a68;font-weight:600}
+
+/* TABLE */
+.q-tbl-wrap{overflow-x:auto}
+table.qtbl{width:100%;border-collapse:collapse;background:white;min-width:560px}
+table.qtbl thead th{padding:8px 12px;text-align:left;font-size:11px;font-weight:800;color:#4a7070;background:#f8fafb;border-bottom:1.5px solid #e2eaed;white-space:nowrap}
+table.qtbl tbody td{padding:9px 12px;font-size:13px;border-bottom:1px solid #fdf5f0;vertical-align:middle}
+table.qtbl tbody tr:hover td{background:#fdf7f3}
+table.qtbl tbody tr:last-child td{border-bottom:none}
+.qbg-sx{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:800}
+.qbg-neuro{background:#fef9c3;color:#854d0e;border:1px solid #e9c46a;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:800}
+.qsbg{padding:3px 9px;border-radius:99px;font-size:11px;font-weight:800;white-space:nowrap}
+.qs-wait{background:#fdf6e3;color:#8a6a10}
+.qs-conf{background:#fdf1ea;color:#d97757}
+.qs-full{background:#fee8e8;color:#c04040}
+.qs-cancel{background:#fdf7f3;color:#a17a68}
+.qacts{display:flex;gap:3px;flex-wrap:wrap}
+.qab{padding:4px 8px;border-radius:6px;border:none;font-size:10px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif;touch-action:manipulation}
+.qab-conf{background:#e08e6d;color:white}
+.qab-wait{background:#fdf6e3;color:#8a6a10;border:1px solid #e9c46a}
+.qab-full{background:#fee8e8;color:#c04040;border:1px solid #e06464}
+.qab-cancel{background:#fdf7f3;color:#a17a68;border:1px solid #f0d9cc}
+.qnd{text-align:center;padding:40px;color:#a17a68;font-size:14px;background:white}
+
+/* ============ OVERLAYS ============ */
+.ov{position:fixed;inset:0;background:rgba(13,79,79,.4);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.sh{background:white;border-radius:24px 24px 0 0;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.hdl{width:40px;height:4px;background:#f0d9cc;border-radius:99px;margin:14px auto 0}
+.sp{padding:14px 20px 40px}
+.fl{font-size:13px;font-weight:700;color:#e08e6d;margin-bottom:5px;display:block;margin-top:12px}
+.fi{width:100%;padding:12px 13px;border-radius:10px;border:1.5px solid #f0d9cc;font-size:15px;font-family:Sarabun,sans-serif;background:white;outline:none;color:#5c3a2e}
+.fi:focus{border-color:#e08e6d}
+.ferr{display:none;background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:9px 13px;font-size:13px;color:#dc2626;font-weight:700;margin-top:10px}
+.subbtn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#d97757,#e08e6d);color:white;font-size:15px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif;margin-top:14px;touch-action:manipulation}
+.canbtn{width:100%;padding:12px;border-radius:12px;border:1.5px solid #f0d9cc;background:#fdf7f3;color:#e08e6d;font-size:14px;font-weight:700;cursor:pointer;font-family:Sarabun,sans-serif;margin-top:8px;touch-action:manipulation}
+.delbtn{width:100%;padding:12px;border-radius:12px;border:1.5px solid #ef4444;background:transparent;color:#ef4444;font-size:14px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif;margin-top:8px;touch-action:manipulation}
+.warn{background:#fdf6e3;border:1px solid #e9c46a;border-radius:10px;padding:10px 13px;font-size:13px;color:#8a6a10;margin-top:10px}
+.fr2{display:flex;gap:10px}
+.drow{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #edf7f6}
+.dk{color:#a17a68;font-size:13px}
+.dv{font-weight:700;font-size:13px;text-align:right;max-width:60%;color:#5c3a2e}
+.bedsel{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.bselbtn{width:54px;height:54px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:800;border:2px solid;font-family:Sarabun,sans-serif;line-height:1.4;touch-action:manipulation;cursor:pointer}
+.bedtype-toggle{display:flex;gap:8px;margin-top:8px}
+.bt-btn{flex:1;padding:12px 8px;border-radius:12px;border:2px solid;font-size:13px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif;text-align:center;transition:all .15s;touch-action:manipulation}
+.bt-sx{background:#fdf7f3;border-color:#eecbb8;color:#e08e6d}
+.bt-sx.sel{background:#e08e6d;border-color:#e08e6d;color:white}
+.bt-neuro{background:#fdf6e3;border-color:#e9c46a;color:#8a6a10}
+.bt-neuro.sel{background:#e9c46a;border-color:#c4a010;color:#3a2a00}
+.qpick{padding:12px 14px;border-radius:12px;cursor:pointer;border:2px solid #f0d9cc;background:#fdf7f3;margin-bottom:8px}
+.qpick.sel{border-color:#e08e6d;background:#fdf1ea}
+.divider{display:flex;align-items:center;gap:8px;margin:14px 0}
+.divline{flex:1;height:1px;background:#f0d9cc}
+.divtxt{font-size:12px;color:#a17a68;font-weight:600}
+#detbg{position:fixed;inset:0;background:rgba(13,79,79,.4);z-index:300;display:none}
+#detsheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:520px;max-height:92vh;overflow-y:auto;background:white;border-radius:24px 24px 0 0;z-index:301;transition:transform .3s ease;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#c85a3f;color:white;padding:11px 20px;border-radius:12px;font-size:13px;font-weight:700;transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:9999;white-space:nowrap;pointer-events:none;max-width:90vw}
+.toast.s{transform:translateX(-50%) translateY(0)}
+
+/* ============ SUCCESS DIALOG ============ */
+@keyframes popIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.install-prompt{display:none;position:fixed;bottom:80px;left:12px;right:12px;background:#c85a3f;color:white;border-radius:16px;padding:14px 16px;z-index:500;box-shadow:0 8px 24px rgba(13,79,79,.4)}
+.install-prompt.show{display:flex;align-items:center;gap:12px}
+</style>
+</head>
+<body>
+
+<!-- Offline Banner -->
+<div class="offline-bar" id="offline-bar">📵 ออฟไลน์ — แสดงข้อมูลล่าสุดที่มี</div>
+
+<div class="hdr">
+  <div class="hr">
+    <div class="hico">🏥</div>
+    <div>
+      <div class="htitle">ระบบจองเตียง ICU Trauma</div>
+      <div class="hsub" id="upd">กำลังโหลด...</div>
+    </div>
+    <div class="hright">
+      <button class="hlbtn" onclick="showRules()" style="font-size:12px">📋</button>
+      <div id="auth-area"><button class="hlbtn" onclick="showLogin()">🔐 Login</button></div>
+      <button id="export-btn" onclick="showExport()" style="display:none;background:rgba(233,196,106,.25);border:1px solid rgba(233,196,106,.5);color:#e9c46a;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:Sarabun,sans-serif">📊 รายงาน</button>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><span class="stat-num" id="s-free">-</span><span class="stat-lbl">🟢 ว่าง</span></div>
+    <div class="stat"><span class="stat-num" id="s-used">-</span><span class="stat-lbl">🔴 Admit</span></div>
+    <div class="stat"><span class="stat-num" id="s-conf">-</span><span class="stat-lbl">✅ ได้เตียง</span></div>
+    <div class="stat"><span class="stat-num" id="s-wait">-</span><span class="stat-lbl">🕐 รอยืนยัน</span></div>
+  </div>
+</div>
+
+<div class="quota-bar">
+  <div class="quota-item quota-sx">
+    <div class="quota-label">⬜ โควต้า Sx</div>
+    <div class="quota-track"><div class="quota-fill" id="qfill-sx" style="width:0%"></div></div>
+    <div class="quota-count" id="qcount-sx">0 / 6</div>
+  </div>
+  <div class="quota-item quota-neuro">
+    <div class="quota-label">🟨 โควต้า Neuro Sx</div>
+    <div class="quota-track"><div class="quota-fill" id="qfill-neuro" style="width:0%"></div></div>
+    <div class="quota-count" id="qcount-neuro">0 / 2</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" id="tt-bed" onclick="setTab('bed')">🛏️ Bed Map</button>
+  <button class="tab" id="tt-queue" onclick="setTab('queue')">📋 คิวจองเตียง</button>
+  <button class="tab" id="tt-dash" onclick="setTab('dash')">📊 Dashboard</button>
+</div>
+
+<div class="main">
+  <div id="sec-bed" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 12px 80px">
+    <div id="admit-top" style="margin-bottom:12px"></div>
+    <div class="bed-grid" id="bed-grid"></div>
+  </div>
+  <div id="sec-queue" style="display:none">
+    <div class="q-layout">
+      <!-- FORM -->
+      <div class="q-form">
+        <div class="form-head">
+          <div class="ico">🛏️+</div>
+          <div><div class="ftxt">จองเตียง ICU Trauma</div><div class="fsub">แจ้ง ICU Team ทาง LINE อัตโนมัติ</div></div>
+        </div>
+        <div class="qwarn">⚠️ การจอง = ลงคิว ไม่ใช่การการันตีเตียง</div>
+        <label class="qfl">🏢 Ward *</label>
+        <select class="qfi" id="fw" onchange="tgW()">
+          <option value="">— เลือก Ward —</option>
+          <option>ศัลยกรรมชาย</option><option>ศัลยกรรมหญิงและเด็ก</option>
+          <option>ศัลยกรรมประสาท</option><option>ศัลยกรรมกระดูก</option>
+          <option>Burn</option><option>พิเศษชั้น 10</option>
+          <option>Premium ชั้น 4</option><option>Premium ชั้น 5</option>
+          <option>ER (Emergency)</option><option>อื่นๆ</option>
+        </select>
+        <input class="qfi" id="fwc" placeholder="ระบุ Ward" style="margin-top:6px;display:none">
+        <label class="qfl">👤 ชื่อ-นามสกุล *</label>
+        <input class="qfi" id="fp" placeholder="เช่น นายสมชาย ใจดี">
+        <label class="qfl">🏷️ HN</label>
+        <input class="qfi" id="fh" placeholder="Hospital Number">
+        <label class="qfl">🏷️ โควต้า *</label>
+        <div class="bedtype-toggle">
+          <button class="bt-btn bt-sx sel" id="qbtn-sx" onclick="selQtype('sx')">⬜ Sx<br><span id="qsx-count" style="font-size:10px">0/6</span></button>
+          <button class="bt-btn bt-neuro" id="qbtn-neuro" onclick="selQtype('neuro')">🟨 Neuro Sx<br><span id="qneuro-count" style="font-size:10px">0/2</span></button>
+        </div>
+        <label class="qfl">🩺 แพทย์</label>
+        <input class="qfi" id="fd" placeholder="ชื่อแพทย์">
+        <label class="qfl">🩻 Diagnosis</label>
+        <input class="qfi" id="fdx" placeholder="เช่น TBI, ORIF femur">
+        <label class="qfl">⚕️ Operation</label>
+        <input class="qfi" id="fo" placeholder="ปล่อยว่างได้">
+        <div class="qfr2">
+          <div><label class="qfl">📅 วันที่ *</label><input class="qfi" id="fd2" type="date"></div>
+          <div><label class="qfl">⏰ เวลา</label><input class="qfi" id="ft" type="time"></div>
+        </div>
+        <label class="qfl">✍️ ชื่อผู้จอง *</label>
+        <input class="qfi" id="fb2" placeholder="ชื่อพยาบาลผู้จอง">
+        <label class="qfl">📌 หมายเหตุ</label>
+        <textarea class="qfi" id="fn" rows="2" style="resize:none" placeholder="NPO, On ventilator ฯลฯ"></textarea>
+        <div class="ferr" id="qfe"></div>
+        <button class="qsubtn" onclick="subBook()">✅ จองเตียง + แจ้ง LINE</button>
+        <button class="qcanbtn" onclick="resetBook()">ล้างข้อมูล</button>
+        <div style="height:16px"></div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="q-table">
+        <div class="q-toolbar">
+          <div class="qttl">📋 รายการจองเตียง</div>
+          <div class="q-filters">
+            <button class="qfb on" onclick="setFi('all',this)">ทั้งหมด</button>
+            <button class="qfb" onclick="setFi('รอยืนยัน',this)">🕐 รอยืนยัน</button>
+            <button class="qfb" onclick="setFi('ได้เตียง',this)">✅ ได้เตียง</button>
+            <button class="qfb" onclick="setFi('เต็ม',this)">❌ เต็ม</button>
+            <button class="qfb" onclick="setFi('ยกเลิก',this)">🚫 ยกเลิก</button>
+          </div>
+        </div>
+        <div class="q-scroll" id="queue-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="sec-dash" style="display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 12px 80px;background:#fdf5f0">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px" id="dash-stats"></div>
+    <div style="background:white;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(13,79,79,.07)">
+      <div style="font-weight:800;font-size:14px;color:#c85a3f;margin-bottom:12px">🏷️ โควต้าเตียงปัจจุบัน</div>
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;font-weight:700;color:#475569">⬜ Sx</span><span style="font-size:13px;font-weight:800;color:#d97757" id="dash-sx-text">0 / 6</span></div>
+        <div style="height:12px;background:#f1f5f9;border-radius:99px;overflow:hidden"><div id="dash-sx-bar" style="height:100%;background:linear-gradient(90deg,#e08e6d,#e8a186);border-radius:99px;transition:width .5s;width:0%"></div></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;font-weight:700;color:#854d0e">🟨 Neuro Sx</span><span style="font-size:13px;font-weight:800;color:#854d0e" id="dash-neuro-text">0 / 2</span></div>
+        <div style="height:12px;background:#fef9c3;border-radius:99px;overflow:hidden"><div id="dash-neuro-bar" style="height:100%;background:linear-gradient(90deg,#e9c46a,#c4a010);border-radius:99px;transition:width .5s;width:0%"></div></div>
+      </div>
+    </div>
+    <div style="background:white;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(13,79,79,.07)">
+      <div style="font-weight:800;font-size:14px;color:#c85a3f;margin-bottom:12px">🍩 สัดส่วนประเภทเตียง (Admit อยู่)</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <canvas id="pie-chart" width="120" height="120" style="flex-shrink:0"></canvas>
+        <div id="pie-legend" style="flex:1"></div>
+      </div>
+    </div>
+    <div style="background:white;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(13,79,79,.07)">
+      <div style="font-weight:800;font-size:14px;color:#c85a3f;margin-bottom:12px">📋 สถานะคิวจองเตียง</div>
+      <div id="dash-queue-bars"></div>
+    </div>
+    <div style="background:white;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(13,79,79,.07)">
+      <div style="font-weight:800;font-size:14px;color:#c85a3f;margin-bottom:4px">📅 คิวจองรายวัน (7 วันข้างหน้า)</div>
+      <div style="font-size:11px;color:#a17a68;margin-bottom:12px">จำนวนผู้ป่วยที่จองเตียงแต่ละวัน</div>
+      <canvas id="bar-chart" style="width:100%;height:160px"></canvas>
+    </div>
+    <div style="background:white;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(13,79,79,.07)">
+      <div style="font-weight:800;font-size:14px;color:#c85a3f;margin-bottom:12px">🏢 Ward ที่จองเตียงมากสุด</div>
+      <div id="dash-ward-list"></div>
+    </div>
+    <div style="text-align:center;font-size:11px;color:#94a3b8;padding-bottom:10px">อัปเดตอัตโนมัติทุก 30 วินาที</div>
+  </div>
+</div>
+
+<!-- PWA Install Prompt -->
+<div class="install-prompt" id="install-prompt">
+  <div style="font-size:24px">📲</div>
+  <div style="flex:1">
+    <div style="font-weight:800;font-size:14px">เพิ่มเป็นแอพ</div>
+    <div style="font-size:12px;color:#f3c4ac;margin-top:2px">ใช้งานได้ offline</div>
+  </div>
+  <button onclick="installPWA()" style="background:#e8a186;border:none;color:white;border-radius:8px;padding:8px 14px;font-weight:800;font-size:13px;cursor:pointer;font-family:Sarabun,sans-serif">ติดตั้ง</button>
+  <button onclick="dismissInstall()" style="background:rgba(255,255,255,.15);border:none;color:white;border-radius:8px;padding:8px;cursor:pointer;margin-left:4px">✕</button>
+</div>
+
+<div id="detbg" onclick="closeDet()"></div>
+<div id="detsheet"><div class="hdl"></div><div id="detcontent" style="padding:14px 20px 40px"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ==========================================
+// ⚠️ แก้ URL นี้ให้เป็น Apps Script URL ของคุณ
+// ==========================================
+var API = 'https://script.google.com/macros/s/AKfycby9Xzxec0hYDzzBuh8OvJtDTwPxi2iyYK8P_JiheOVAdhjGggjfdT3jOVAQcLr8zP5QGw/exec';
+
+var WARDS = ["ศัลยกรรมชาย","ศัลยกรรมหญิงและเด็ก","ศัลยกรรมประสาท","ศัลยกรรมกระดูก","Burn","พิเศษชั้น 10","Premium ชั้น 4","Premium ชั้น 5","ER (Emergency)"];
+var ICU_USER='icut1', ICU_PASS='8504';
+var BEDS=8, QUOTA_SX=6, QUOTA_NEURO=2;
+var isICU=false, qs=[], admitted=[], totB=BEDS, fi='all';
+var DA=['อา','จ','อ','พ','พฤ','ศ','ส'];
+var MO=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+var SC={'ได้เตียง':{bg:'#fdf1ea',tc:'#d97757',dot:'#e08e6d',ic:'✅'},'รอยืนยัน':{bg:'#fdf6e3',tc:'#8a6a10',dot:'#e9c46a',ic:'🕐'},'เต็ม':{bg:'#fee8e8',tc:'#c04040',dot:'#e06464',ic:'❌'},'ยกเลิก':{bg:'#fdf7f3',tc:'#a17a68',dot:'#f3c4ac',ic:'🚫'}};
+
+// ==========================================
+// PWA — Register Service Worker
+// ==========================================
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js')
+      .then(function(reg){ console.log('[PWA] SW registered:', reg.scope); })
+      .catch(function(e){ console.warn('[PWA] SW failed:', e); });
+    // รับข้อความจาก SW
+    navigator.serviceWorker.addEventListener('message', function(e){
+      if(e.data && e.data.type==='SYNC_DATA') load();
+    });
+  });
+}
+
+// Online/Offline detection
+window.addEventListener('online', function(){
+  document.getElementById('offline-bar').classList.remove('show');
+  toast('🌐 กลับมา online แล้ว');
+  load();
+});
+window.addEventListener('offline', function(){
+  document.getElementById('offline-bar').classList.add('show');
+  toast('📵 ออฟไลน์ — ใช้ข้อมูล cache');
+});
+if(!navigator.onLine) document.getElementById('offline-bar').classList.add('show');
+
+// PWA Install
+var deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-prompt').classList.add('show');
+});
+window.addEventListener('appinstalled', function(){
+  document.getElementById('install-prompt').classList.remove('show');
+  toast('✅ ติดตั้งแอพสำเร็จ!');
+});
+function installPWA(){
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(r){
+    if(r.outcome==='accepted') toast('✅ ติดตั้งแอพสำเร็จ!');
+    deferredPrompt=null;
+    document.getElementById('install-prompt').classList.remove('show');
+  });
+}
+function dismissInstall(){ document.getElementById('install-prompt').classList.remove('show'); }
+
+// ==========================================
+// HELPERS
+// ==========================================
+function thD(s){if(!s||s==='-')return'-';var p=s.split('/');if(p.length!==3)return s;var dt=new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));return DA[dt.getDay()]+' '+p[0]+' '+MO[parseInt(p[1])-1]+' '+(parseInt(p[2])+543);}
+function toISO(s){var p=s.split('/');return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;}
+var todayISO=new Date().toISOString().split('T')[0];
+function maskName(n){if(!n||n==='-')return'-';var p=n.trim().split(' ');var pre=['นาย','นาง','นางสาว','เด็กชาย','เด็กหญิง','ด.ช.','ด.ญ.'];var px='',r=p;for(var i=0;i<pre.length;i++){if(p[0]===pre[i]){px=p[0]+' ';r=p.slice(1);break;}}if(r.length===1)return px+r[0];var ln=r[r.length-1];return px+r.slice(0,-1).join(' ')+' '+ln.substring(0,Math.max(1,Math.ceil(ln.length/2)))+'***';}
+function maskHN(h){if(!h||h==='-')return'-';var s=String(h);return s.length<=3?s:s.substring(0,Math.ceil(s.length/2))+'***';}
+
+// ==========================================
+// DATA LOAD
+// ==========================================
+load();
+setInterval(load, 30000);
+
+function load(){
+  fetch(API+'?action=getData')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.offline){ toast('📵 ใช้ข้อมูล offline'); }
+      qs=d.queues||[]; totB=d.beds||BEDS; admitted=d.admitted||[];
+      document.getElementById('upd').textContent='อัปเดต: '+(d.updated||'-');
+      renderAll();
+    })
+    .catch(function(){ toast('⚠️ โหลดข้อมูลไม่ได้'); });
+}
+
+// ==========================================
+// RENDER
+// ==========================================
+function renderAll(){
+  var usedSx=admitted.filter(function(a){return(a.bedType||'sx')==='sx';}).length;
+  var usedNeuro=admitted.filter(function(a){return a.bedType==='neuro';}).length;
+  var used=admitted.length, free=Math.max(0,totB-used);
+  document.getElementById('s-free').textContent=free;
+  document.getElementById('s-used').textContent=used;
+  document.getElementById('s-conf').textContent=qs.filter(function(q){return q.status==='ได้เตียง';}).length;
+  document.getElementById('s-wait').textContent=qs.filter(function(q){return q.status==='รอยืนยัน';}).length;
+  document.getElementById('qfill-sx').style.width=Math.min(100,Math.round(usedSx/QUOTA_SX*100))+'%';
+  document.getElementById('qcount-sx').textContent=usedSx+' / '+QUOTA_SX+' เตียง';
+  document.getElementById('qfill-neuro').style.width=Math.min(100,Math.round(usedNeuro/QUOTA_NEURO*100))+'%';
+  document.getElementById('qcount-neuro').textContent=usedNeuro+' / '+QUOTA_NEURO+' เตียง';
+  // admit top
+  var top=document.getElementById('admit-top');
+  if(top){
+    if(isICU){
+      top.innerHTML='<button onclick="showAdmitForm()" style="display:block;width:100%;padding:14px;border-radius:14px;border:none;background:linear-gradient(135deg,#d97757,#e08e6d);color:white;font-size:16px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif;box-shadow:0 4px 14px rgba(42,157,143,.3)">🏥 + Admit ผู้ป่วยใหม่</button>';
+    } else {
+      top.innerHTML='<div style="background:#f0fdf4;border:1.5px dashed #eecbb8;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px"><div style="font-size:28px">🔐</div><div><div style="font-weight:800;font-size:15px;color:#d97757">ICU Nurse เท่านั้น</div><div style="font-size:13px;color:#a17a68;margin-top:2px">กรุณา Login ก่อน Admit ผู้ป่วย</div></div><button onclick="showLogin()" style="margin-left:auto;background:linear-gradient(135deg,#d97757,#e08e6d);border:none;color:white;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif;white-space:nowrap">Login →</button></div>';
+    }
+  }
+  renderBedMap(); renderQueues();
+}
+
+function renderBedMap(){
+  var el=document.getElementById('bed-grid');
+  var byBed={};admitted.forEach(function(pt){byBed[pt.bed]=pt;});
+  var html='';
+  for(var i=1;i<=totB;i++){
+    var b=String(i);var pt=byBed[b];
+    if(pt){
+      var isNeuro=(pt.bedType==='neuro');
+      var name=isICU?(pt.patient||'-'):maskName(pt.patient||'-');
+      var hn=pt.hn?(isICU?pt.hn:maskHN(pt.hn)):'';
+      html+='<div class="bed-card '+(isNeuro?'type-neuro':'type-sx')+'" onclick="showBedDetail(\''+b+'\')">';
+      html+='<span class="bed-badge '+(isNeuro?'badge-neuro':'badge-sx')+'">'+(isNeuro?'🟨 Neuro':'⬜ Sx')+'</span>';
+      html+='<div class="bed-num">เตียง '+b+'</div>';
+      html+='<div class="bed-icon">🛏️</div>';
+      html+='<div class="bed-status bed-status-admit">🔴 Admit อยู่</div>';
+      html+='<div class="bed-patient">'+name+'</div>';
+      if(hn)html+='<div class="bed-doctor" style="font-size:10px">HN '+hn+'</div>';
+      if(pt.doc)html+='<div class="bed-doctor">👨‍⚕️ '+pt.doc+'</div>';
+      if(pt.dx)html+='<div class="bed-dx">🩻 '+pt.dx+'</div>';
+      if(pt.op)html+='<div class="bed-op">⚕️ '+pt.op+'</div>';
+      html+='<div style="font-size:10px;color:#a17a68;margin-top:6px">📅 '+(pt.admitDate||'-')+'</div></div>';
+    } else {
+      html+='<div class="bed-card empty-bed" onclick="'+(isICU?'showAdmitBed(\''+b+'\')':'')+'" style="'+(isICU?'':'cursor:default')+'">';
+      html+='<div class="bed-num">เตียง '+b+'</div>';
+      html+='<div class="bed-icon">🛏️</div>';
+      html+='<div class="bed-status">🟢 ว่าง</div>';
+      html+='<div class="bed-empty-txt">พร้อมรับผู้ป่วย</div>';
+      if(isICU)html+='<div style="font-size:11px;color:#e08e6d;margin-top:8px;font-weight:700">แตะเพื่อ Admit →</div>';
+      html+='</div>';
+    }
+  }
+  el.innerHTML=html;
+}
+
+function showBedDetail(bed){
+  var pt=admitted.find(function(a){return a.bed===bed;});if(!pt)return;
+  var isNeuro=(pt.bedType==='neuro');
+  var ac=isNeuro?'#c4a010':'#e08e6d';
+  var name=isICU?(pt.patient||'-'):maskName(pt.patient||'-');
+  var hn=pt.hn?(isICU?pt.hn:maskHN(pt.hn)):'';
+  var rows=[['🛏️ เตียง',bed],['🏷️ ประเภท',isNeuro?'🟨 Neuro Sx':'⬜ Sx'],['👤 ผู้ป่วย',name]];
+  if(hn)rows.push(['🏷️ HN',hn]);
+  rows.push(['🏢 Ward',pt.ward||'-']);
+  if(pt.doc)rows.push(['👨‍⚕️ แพทย์',pt.doc]);
+  if(pt.dx)rows.push(['🩻 Diagnosis',pt.dx]);
+  if(pt.op)rows.push(['⚕️ Operation',pt.op]);
+  rows.push(['📅 Admit',pt.admitDate||'-']);
+  var h='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">';
+  h+='<div style="width:50px;height:50px;background:'+(isNeuro?'#fef9c3':'#f1f5f9')+';border:2px solid '+ac+';border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:20px">🛏️</div><div style="font-size:9px;font-weight:800;color:'+ac+'">'+bed+'</div></div>';
+  h+='<div><div style="font-weight:800;font-size:18px;color:#5c3a2e">'+name+'</div>';
+  h+='<div style="font-size:12px;color:#a17a68;margin-top:2px">'+(pt.ward||'-')+'</div>';
+  h+='<span style="background:'+(isNeuro?'#fef9c3':'#f1f5f9')+';color:'+ac+';border-radius:99px;padding:2px 9px;font-size:11px;font-weight:800">'+(isNeuro?'🟨 Neuro Sx':'⬜ Sx')+'</span></div></div>';
+  rows.forEach(function(r){h+='<div class="drow"><span class="dk">'+r[0]+'</span><span class="dv">'+r[1]+'</span></div>';});
+  if(isICU)h+=
+    '<div style="margin-top:16px;background:#fdf7f3;border:1.5px solid #f0d9cc;border-radius:12px;padding:12px">'+
+    '<div style="font-weight:800;font-size:13px;color:#d97757;margin-bottom:8px">🏠 Discharge — คืนเตียง</div>'+
+    '<label style="font-size:12px;font-weight:700;color:#a17a68;display:block;margin-bottom:4px">📍 ย้ายออกไป Ward *</label>'+
+    '<select id="disc-ward" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid #f0d9cc;font-size:14px;font-family:Sarabun,sans-serif;background:white;outline:none;color:#5c3a2e;margin-bottom:6px">'+
+    '<option value="">— เลือก Ward ปลายทาง —</option>'+
+    WARDS.map(function(w){return'<option>'+w+'</option>';}).join('')+
+    '<option>กลับบ้าน</option><option>ห้อง ICU อื่น</option><option>เสียชีวิต</option><option>อื่นๆ</option>'+
+    '</select>'+
+    '<input id="disc-ward-other" placeholder="ระบุ Ward ปลายทาง" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid #f0d9cc;font-size:14px;font-family:Sarabun,sans-serif;display:none;margin-bottom:6px">'+
+    '<button class="delbtn" style="margin-top:4px" onclick="doDischarge(\''+pt.id+'\')">🏠 ยืนยัน Discharge</button>'+
+    '</div>';
+  h+='<button class="canbtn" onclick="closeDet()">ปิด</button>';
+  document.getElementById('detcontent').innerHTML=h;
+  document.getElementById('detbg').style.display='block';
+  document.getElementById('detsheet').style.transform='translateX(-50%) translateY(0)';
+  document.body.style.overflow='hidden';
+}
+
+function doDischarge(id){
+  var wardSel=document.getElementById('disc-ward');
+  var wardOther=document.getElementById('disc-ward-other');
+  var destWard=wardSel?wardSel.value:'';
+  if(destWard==='อื่นๆ'&&wardOther)destWard=wardOther.value.trim()||'อื่นๆ';
+  if(!destWard){alert('กรุณาเลือก Ward ปลายทางก่อนค่ะ');return;}
+  var pt=admitted.find(function(a){return a.id===id;});
+  var ptName=pt?pt.patient:'ผู้ป่วย';
+  closeDet();
+  fetch(API+'?action=dischargePatient&id='+encodeURIComponent(id)+'&destWard='+encodeURIComponent(destWard))
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res.ok){
+        showSuccess(
+          'Discharge เรียบร้อย!',
+          ptName+'\nย้ายออกไป: '+destWard+'\nเตียงว่างแล้วค่ะ',
+          function(){load();}
+        );
+      } else toast('❌ เกิดข้อผิดพลาด');
+    });
+}
+
+// toggle ward other input in discharge
+document.addEventListener('change', function(e){
+  if(e.target && e.target.id==='disc-ward'){
+    var other=document.getElementById('disc-ward-other');
+    if(other) other.style.display=e.target.value==='อื่นๆ'?'block':'none';
+  }
+});
+function showAdmitBed(b){window._preBed=b||null;showAdmitForm();}
+
+function selQtype(t){window._qBedType=t;var bs=document.getElementById('qbtn-sx');var bn=document.getElementById('qbtn-neuro');if(bs)bs.className='bt-btn bt-sx'+(t==='sx'?' sel':'');if(bn)bn.className='bt-btn bt-neuro'+(t==='neuro'?' sel':'');}
+function tgW(){var s=document.getElementById('fw');var c=document.getElementById('fwc');if(c)c.style.display=s&&s.value==='อื่นๆ'?'block':'none';}
+function resetBook(){['fw','fp','fh','fd','fdx','fo','fd2','ft','fb2','fn','fwc'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});var fe=document.getElementById('qfe');if(fe)fe.style.display='none';selQtype('sx');}
+
+function renderQueues(){
+  var el=document.getElementById('queue-list');
+  var list=fi==='all'?qs:qs.filter(function(q){return q.status===fi;});
+  if(!list.length){el.innerHTML='<div class="qnd">ไม่มีรายการ</div>';return;}
+  var grouped={};list.forEach(function(q){if(!grouped[q.date])grouped[q.date]=[];grouped[q.date].push(q);});
+  var dates=Object.keys(grouped).sort(function(a,b){return toISO(a).localeCompare(toISO(b));});
+  var QSC={'ได้เตียง':{cls:'qs-conf',ic:'✅'},'รอยืนยัน':{cls:'qs-wait',ic:'🕐'},'เต็ม':{cls:'qs-full',ic:'❌'},'ยกเลิก':{cls:'qs-cancel',ic:'🚫'}};
+  el.innerHTML=dates.map(function(date){
+    var dq=grouped[date];
+    var isToday=toISO(date)===todayISO;var isPast=toISO(date)<todayISO;
+    var conf=dq.filter(function(q){return q.status==='ได้เตียง';}).length;
+    var wait=dq.filter(function(q){return q.status==='รอยืนยัน';}).length;
+    var hdr='<div class="date-hdr"><span style="font-size:16px">📅</span><span class="dtxt">'+thD(date)+'</span>'+
+      (isToday?'<span class="today-b">วันนี้</span>':'')+(isPast?'<span class="past-b">ผ่านแล้ว</span>':'')+
+      '<span class="dbadge">'+dq.length+' ราย</span>'+
+      '<span class="dsum">✅ '+conf+' · 🕐 '+wait+'</span></div>';
+    var rows=dq.map(function(q,i){
+      var sc=QSC[q.status]||QSC['รอยืนยัน'];
+      var pname=isICU?q.patient:maskName(q.patient);
+      var qcls=q.quota==='neuro'?'qbg-neuro':'qbg-sx';
+      var qlbl=q.quota==='neuro'?'🟨 Neuro':'⬜ Sx';
+      var icuBtns=isICU&&!isPast?
+        ['ได้เตียง','รอยืนยัน','เต็ม','ยกเลิก'].map(function(s){
+          var cs=QSC[s];var isAct=q.status===s;
+          var cls=s==='ได้เตียง'?'qab-conf':s==='รอยืนยัน'?'qab-wait':s==='เต็ม'?'qab-full':'qab-cancel';
+          return'<button class="qab '+cls+'" style="opacity:'+(isAct?1:.45)+'" onclick="chg('+q.row+',\''+s+'\')">'+cs.ic+'</button>';
+        }).join(''):'';
+      if(!isICU&&!isPast&&q.status!=='ยกเลิก')icuBtns+='<button class="qab" style="background:#fdf7f3;color:#e08e6d;border:1px solid #eecbb8" onclick="wardCancel('+q.row+')">🚫 ยกเลิก</button>';
+      return'<tr style="opacity:'+(isPast?0.6:1)+'">'+
+        '<td style="color:#a17a68;font-weight:700;font-size:12px">'+(i+1)+'</td>'+
+        '<td><div style="font-weight:800;color:#5c3a2e">'+pname+'</div><div style="font-size:11px;color:#94a3b8">'+q.ward+'</div></td>'+
+        '<td><div style="color:#d97757;font-weight:700;font-size:12px">'+(q.dx?'🩻 '+q.dx:'—')+'</div>'+(q.op?'<div style="font-size:11px;color:#8a5a10">⚕️ '+q.op+'</div>':'')+'</td>'+
+        '<td><span class="'+qcls+'">'+qlbl+'</span></td>'+
+        '<td style="font-weight:700;font-size:12px;white-space:nowrap">'+q.time+'</td>'+
+        '<td style="font-size:11px;color:#a17a68">'+q.book+'</td>'+
+        '<td><span class="qsbg '+sc.cls+'">'+sc.ic+' '+q.status+'</span></td>'+
+        '<td><div class="qacts">'+icuBtns+'</div></td>'+
+      '</tr>';
+    }).join('');
+    return'<div class="date-block">'+hdr+
+      '<div class="q-tbl-wrap"><table class="qtbl">'+
+      '<thead><tr><th>#</th><th>ชื่อ / Ward</th><th>Dx / Op</th><th>โควต้า</th><th>เวลา</th><th>ผู้จอง</th><th>สถานะ</th><th>จัดการ</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody></table></div></div>';
+  }).join('');
+}
+
+function chg(row,status){
+  toast('กำลังอัปเดต...');
+  fetch(API+'?action=updateStatus&row='+row+'&status='+encodeURIComponent(status))
+    .then(function(r){return r.json();})
+    .then(function(){toast((SC[status]||SC['รอยืนยัน']).ic+' อัปเดต → '+status);load();})
+    .catch(function(){toast('❌ เกิดข้อผิดพลาด');});
+}
+function wardCancel(row){if(!confirm('ยืนยันการยกเลิกการจอง?'))return;chg(row,'ยกเลิก');}
+
+function showAdmitForm(){
+  var preBed=window._preBed||null;
+  var usedBeds=admitted.map(function(a){return a.bed;});
+  var usedSx=admitted.filter(function(a){return(a.bedType||'sx')==='sx';}).length;
+  var usedNeuro=admitted.filter(function(a){return a.bedType==='neuro';}).length;
+  var readyQ=qs.filter(function(q){return q.status==='ได้เตียง';});
+  var bedBtns='';
+  for(var i=1;i<=totB;i++){var b=String(i);var isUsed=usedBeds.indexOf(b)>=0;var isSel=preBed===b;
+    bedBtns+='<button class="bselbtn"'+(isUsed?' disabled':'')+'data-b="'+b+'" onclick="selBed(this)" style="background:'+(isUsed?'#fdf7f3':isSel?'#e08e6d':'white')+';border-color:'+(isUsed?'#f0d9cc':isSel?'#e08e6d':'#e8a186')+';color:'+(isUsed?'#f3c4ac':isSel?'white':'#e08e6d')+';cursor:'+(isUsed?'not-allowed':'pointer')+'">'+(isUsed?'🔴':'🟢')+'<br>'+b+'</button>';}
+  if(preBed)window._selBed=preBed;
+  var wOpts='<option value="">— เลือก Ward —</option>'+WARDS.map(function(w){return'<option value="'+w+'">'+w+'</option>';}).join('')+'<option value="อื่นๆ">อื่นๆ</option>';
+  var qHTML=readyQ.length?'<div style="font-size:13px;font-weight:700;color:#e08e6d;margin-top:12px;margin-bottom:8px">✅ คิวที่ได้เตียงแล้ว</div>'+readyQ.map(function(q){return'<div class="qpick" id="qp-'+q.row+'" data-row="'+q.row+'" onclick="pickQ(this)"><div style="font-weight:800;font-size:14px;color:#5c3a2e">'+q.patient+'</div><div style="font-size:12px;color:#a17a68;margin-top:2px">'+q.ward+'</div>'+(q.dx?'<div style="font-size:12px;color:#e08e6d;margin-top:2px">🩻 '+q.dx+'</div>':'')+'<div id="chk-'+q.row+'" style="display:none;color:#e08e6d;font-weight:800;font-size:12px;margin-top:4px">✓ เลือกแล้ว</div></div>';}).join('')+'<div class="divider"><div class="divline"></div><div class="divtxt">หรือกรอกเองด้านล่าง</div><div class="divline"></div></div>':'<div class="warn">📌 ไม่มีคิวที่ได้เตียงรอ Admit</div>';
+  var warnSx=usedSx>=QUOTA_SX?'<div class="warn">⚠️ โควต้า Sx เต็มแล้ว ('+usedSx+'/'+QUOTA_SX+')</div>':'';
+  var warnNeuro=usedNeuro>=QUOTA_NEURO?'<div class="warn">⚠️ โควต้า Neuro เต็มแล้ว ('+usedNeuro+'/'+QUOTA_NEURO+')</div>':'';
+  var h='<div class="hdl"></div><div class="sp">';
+  h+='<div style="background:linear-gradient(135deg,#d97757,#e08e6d);border-radius:14px;padding:14px 16px;margin-bottom:12px"><div style="color:white;font-weight:800;font-size:17px">🏥 Admit ผู้ป่วยเข้า ICU</div></div>';
+  h+=qHTML;
+  h+='<label class="fl">🛏️ เลือกเตียง *</label><div class="bedsel">'+bedBtns+'</div>';
+  h+='<label class="fl">🏷️ ประเภทโควต้า *</label>'+warnSx+warnNeuro;
+  h+='<div class="bedtype-toggle"><button class="bt-btn bt-sx sel" id="btn-sx" onclick="selBedType(\'sx\')">⬜ Sx<br><span style="font-size:10px">'+usedSx+'/'+QUOTA_SX+'</span></button><button class="bt-btn bt-neuro" id="btn-neuro" onclick="selBedType(\'neuro\')">🟨 Neuro Sx<br><span style="font-size:10px">'+usedNeuro+'/'+QUOTA_NEURO+'</span></button></div>';
+  h+='<label class="fl">👤 ชื่อ-นามสกุล *</label><input class="fi" id="af-name" placeholder="เช่น นายสมชาย ใจดี">';
+  h+='<label class="fl">🏷️ HN</label><input class="fi" id="af-hn" placeholder="Hospital Number">';
+  h+='<label class="fl">🩺 แพทย์</label><input class="fi" id="af-doc" placeholder="ชื่อแพทย์">';
+  h+='<label class="fl">🩻 Diagnosis</label><input class="fi" id="af-dx" placeholder="เช่น TBI, ORIF">';
+  h+='<label class="fl">⚕️ Operation</label><input class="fi" id="af-op" placeholder="ปล่อยว่างได้">';
+  h+='<label class="fl">🏢 Ward *</label><select class="fi" id="af-ward" onchange="tgAW()">'+wOpts+'</select>';
+  h+='<input class="fi" id="af-ward-other" placeholder="ระบุ Ward" style="margin-top:6px;display:none">';
+  h+='<div class="ferr" id="af-err"></div>';
+  h+='<button class="subbtn" onclick="submitAdmit()">✅ Admit ผู้ป่วย</button>';
+  h+='<button class="canbtn" onclick="closeOv();window._preBed=null;">ยกเลิก</button></div>';
+  window._selQrow=null;window._selBedType='sx';
+  openOv(h);
+  if(preBed){setTimeout(function(){var btn=document.querySelector('.bselbtn[data-b="'+preBed+'"]');if(btn)selBed(btn);},100);}
+}
+
+function selBedType(t){window._selBedType=t;var bs=document.getElementById('btn-sx');var bn=document.getElementById('btn-neuro');if(bs)bs.className='bt-btn bt-sx'+(t==='sx'?' sel':'');if(bn)bn.className='bt-btn bt-neuro'+(t==='neuro'?' sel':'');}
+function selBed(btn){document.querySelectorAll('.bselbtn').forEach(function(el){if(!el.disabled){el.style.background='white';el.style.borderColor='#e8a186';el.style.color='#e08e6d';}});window._selBed=btn.getAttribute('data-b');btn.style.background='#e08e6d';btn.style.borderColor='#e08e6d';btn.style.color='white';}
+function tgAW(){var s=document.getElementById('af-ward');var c=document.getElementById('af-ward-other');if(c)c.style.display=s&&s.value==='อื่นๆ'?'block':'none';}
+function pickQ(el){var row=parseInt(el.getAttribute('data-row'));var q=qs.find(function(x){return x.row===row;});if(!q)return;if(window._selQrow){var op=document.getElementById('qp-'+window._selQrow);if(op)op.className='qpick';var oc=document.getElementById('chk-'+window._selQrow);if(oc)oc.style.display='none';}window._selQrow=row;el.className='qpick sel';var chk=document.getElementById('chk-'+row);if(chk)chk.style.display='block';document.getElementById('af-name').value=q.patient||'';document.getElementById('af-hn').value=q.hn||'';document.getElementById('af-dx').value=q.dx||'';document.getElementById('af-op').value=q.op||'';document.getElementById('af-ward').value=q.ward||'';tgAW();}
+function submitAdmit(){
+  var bed=window._selBed;var name=(document.getElementById('af-name').value||'').trim();
+  var ward=document.getElementById('af-ward').value;if(ward==='อื่นๆ')ward=(document.getElementById('af-ward-other').value||'').trim()||'อื่นๆ';
+  var err=document.getElementById('af-err');
+  if(!bed||!name||!ward){err.textContent='❗ กรุณาเลือกเตียง กรอกชื่อ และเลือก Ward';err.style.display='block';return;}
+  err.style.display='none';var sb=document.querySelector('.subbtn');if(sb){sb.textContent='กำลังบันทึก...';sb.disabled=true;}
+  var today=new Date();var admitDate=String(today.getDate()).padStart(2,'0')+'/'+String(today.getMonth()+1).padStart(2,'0')+'/'+today.getFullYear();
+  var params=new URLSearchParams({action:'admitPatient',bed:bed,patient:name,hn:(document.getElementById('af-hn').value||'').trim(),dx:(document.getElementById('af-dx').value||'').trim(),op:(document.getElementById('af-op').value||'').trim(),doc:(document.getElementById('af-doc').value||'').trim(),ward:ward,admitDate:admitDate,bedType:window._selBedType||'sx',qrow:window._selQrow||''});
+  fetch(API+'?'+params.toString()).then(function(r){return r.json();}).then(function(res){if(res.ok){toast('🏥 Admit แล้ว — เตียง '+bed);closeOv();window._preBed=null;load();}else{err.textContent='❌ '+(res.err||'เกิดข้อผิดพลาด');err.style.display='block';if(sb){sb.textContent='✅ Admit ผู้ป่วย';sb.disabled=false;}}}).catch(function(){err.textContent='❌ Network error';err.style.display='block';if(sb){sb.textContent='✅ Admit ผู้ป่วย';sb.disabled=false;}});
+}
+
+function showBook(){} // ไม่ใช้แล้ว ฟอร์มอยู่ใน sec-queue แล้ว
+function subB(){subBook();}
+function subBook(){
+  var w=document.getElementById('fw').value;if(w==='อื่นๆ')w=(document.getElementById('fwc').value||'').trim()||'อื่นๆ';
+  var p=(document.getElementById('fp').value||'').trim();var d=document.getElementById('fd2').value;var b=(document.getElementById('fb2').value||'').trim();var fe=document.getElementById('qfe');
+  if(!w||!p||!d||!b){fe.textContent='❗ กรุณากรอกข้อมูลที่ * ให้ครบ';fe.style.display='block';return;}
+  fe.style.display='none';var sb=document.querySelector('.qsubtn');if(sb){sb.textContent='กำลังบันทึก...';sb.disabled=true;}
+  var pm=new URLSearchParams({action:'addQueue',ward:w,patient:p,date:d,booker:b,hn:document.getElementById('fh').value||'',age:'',gender:'ชาย',doctor:document.getElementById('fd').value||'',dx:document.getElementById('fdx').value||'',op:document.getElementById('fo').value||'',time:document.getElementById('ft').value||'',note:document.getElementById('fn').value||'',quota:window._qBedType||'sx'});
+  fetch(API+'?'+pm.toString()).then(function(r){return r.json();}).then(function(res){if(res.ok){showSuccess('จองเตียงสำเร็จ','ระบบได้บันทึกการจองแล้ว\nและแจ้ง ICU Team ทาง LINE แล้วค่ะ',function(){resetBook();load();});}else{fe.textContent='❌ เกิดข้อผิดพลาด';fe.style.display='block';if(sb){sb.textContent='✅ จองเตียง + แจ้ง LINE';sb.disabled=false;}}}).catch(function(){fe.textContent='❌ Network error';fe.style.display='block';if(sb){sb.textContent='✅ จองเตียง + แจ้ง LINE';sb.disabled=false;}});
+}
+  openOv(h);
+}
+function tgW(){var s=document.getElementById('fw');var c=document.getElementById('fwc');if(c)c.style.display=s&&s.value==='อื่นๆ'?'block':'none';}
+function subB(){
+function showLogin(){
+  var h='<div class="hdl"></div><div class="sp" style="text-align:center">';
+  h+='<div style="font-size:44px;margin-bottom:8px">🔐</div>';
+  h+='<div style="font-weight:800;font-size:20px;color:#5c3a2e">ICU Nurse Login</div>';
+  h+='<div style="font-size:13px;color:#a17a68;margin:5px 0 16px">เฉพาะพยาบาล ICU Trauma เท่านั้น</div>';
+  h+='<div id="login-err" style="color:#c04040;font-size:13px;font-weight:700;min-height:20px;margin-bottom:8px"></div>';
+  h+='<div style="text-align:left"><label class="fl">Username</label><input id="login-user" type="text" class="fi" placeholder="username" autocapitalize="none" autocorrect="off"><label class="fl">Password</label><input id="login-pass" type="password" class="fi" placeholder="password"></div>';
+  h+='<button class="subbtn" onclick="doLogin()">✅ เข้าสู่ระบบ ICU</button><button class="canbtn" onclick="closeOv()">ยกเลิก</button></div>';
+  openOv(h);
+}
+function doLogin(){var u=(document.getElementById('login-user').value||'').trim();var p=(document.getElementById('login-pass').value||'').trim();var err=document.getElementById('login-err');if(u===ICU_USER&&p===ICU_PASS){isICU=true;closeOv();toast('✅ Login สำเร็จ');uA();renderAll();}else{err.textContent='❌ Username หรือ Password ไม่ถูกต้อง';}}
+function uA(){document.getElementById('auth-area').innerHTML=isICU?'<div style="display:flex;gap:6px;align-items:center"><div style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:7px;padding:5px 10px;font-size:12px;color:white;font-weight:800">👩‍⚕️ ICU</div><button onclick="logout()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:white;border-radius:6px;padding:5px 8px;font-size:12px;cursor:pointer;font-family:Sarabun,sans-serif">ออก</button></div>':'<button class="hlbtn" onclick="showLogin()">🔐 Login</button>';}
+function logout(){isICU=false;uA();renderAll();}
+
+function showRules(){
+  var rl=[['#e08e6d','01','การจอง = ลงคิว ไม่ใช่การการันตีเตียง'],['#e8a186','02','เรียงตามลำดับ First come, first served'],['#d97757','03','ICU สามารถปรับคิวตามความเหมาะสม'],['#e9c46a','04','กรุณาโทรยืนยันเตียงเช้าวันผ่าตัด'],['#8a6a10','05','โควต้า Sx 6 เตียง ⬜ / Neuro Sx 2 เตียง 🟨'],['#c04040','ER','เคสฉุกเฉิน โทร 8504-8505']];
+  var h='<div class="hdl"></div><div class="sp"><div style="background:linear-gradient(135deg,#d97757,#e08e6d);border-radius:14px;padding:16px;text-align:center;margin-bottom:14px"><div style="font-size:26px;margin-bottom:4px">📋</div><div style="color:white;font-weight:800;font-size:17px">กติกาการจองเตียง</div><div style="color:rgba(255,255,255,.8);font-size:12px;margin-top:3px">Contact: 8504-8505</div></div>';
+  rl.forEach(function(r,i){h+='<div style="display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:'+(i<rl.length-1?'1px solid #edf7f6':'none')+'"><div style="width:40px;height:40px;border-radius:10px;background:'+r[0]+';display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:12px;flex-shrink:0">'+r[1]+'</div><div style="font-size:14px;color:#5c3a2e;font-weight:600">'+r[2]+'</div></div>';});
+  h+='<button class="subbtn" style="margin-top:16px" onclick="closeOv()">ปิด</button></div>';
+  openOv(h);
+}
+
+function setTab(t){
+  document.getElementById('sec-bed').style.display=t==='bed'?'':'none';
+  document.getElementById('sec-queue').style.display=t==='queue'?'flex':'none';
+  document.getElementById('sec-dash').style.display=t==='dash'?'':'none';
+  document.getElementById('tt-bed').className='tab'+(t==='bed'?' on':'');
+  document.getElementById('tt-queue').className='tab'+(t==='queue'?' on':'');
+  document.getElementById('tt-dash').className='tab'+(t==='dash'?' on':'');
+  if(t==='dash') renderDashboard();
+}
+
+function renderDashboard(){
+  var usedSx=admitted.filter(function(a){return(a.bedType||'sx')==='sx';}).length;
+  var usedNeuro=admitted.filter(function(a){return a.bedType==='neuro';}).length;
+  var used=admitted.length;
+  var free=Math.max(0,totB-used);
+  var qWait=qs.filter(function(q){return q.status==='รอยืนยัน';}).length;
+  var qConf=qs.filter(function(q){return q.status==='ได้เตียง';}).length;
+  var qFull=qs.filter(function(q){return q.status==='เต็ม';}).length;
+  var qCancel=qs.filter(function(q){return q.status==='ยกเลิก';}).length;
+
+  // Summary cards
+  var cards=[
+    {n:free,l:'🟢 เตียงว่าง',bg:'#fdf1ea',c:'#d97757'},
+    {n:used,l:'🔴 Admit อยู่',bg:'#fee8e8',c:'#c04040'},
+    {n:qConf,l:'✅ ได้เตียงแล้ว',bg:'#fdf6e3',c:'#8a6a10'},
+    {n:qWait,l:'🕐 รอยืนยัน',bg:'#fdf7f3',c:'#e08e6d'}
+  ];
+  document.getElementById('dash-stats').innerHTML=cards.map(function(c){
+    return'<div style="background:'+c.bg+';border-radius:14px;padding:14px;text-align:center;border:1px solid rgba(0,0,0,.06)">'+
+      '<div style="font-size:32px;font-weight:900;font-family:monospace;color:'+c.c+'">'+c.n+'</div>'+
+      '<div style="font-size:12px;font-weight:700;color:'+c.c+';margin-top:4px;opacity:.8">'+c.l+'</div></div>';
+  }).join('');
+
+  // Quota bars
+  document.getElementById('dash-sx-text').textContent=usedSx+' / '+QUOTA_SX;
+  document.getElementById('dash-sx-bar').style.width=Math.min(100,Math.round(usedSx/QUOTA_SX*100))+'%';
+  document.getElementById('dash-neuro-text').textContent=usedNeuro+' / '+QUOTA_NEURO;
+  document.getElementById('dash-neuro-bar').style.width=Math.min(100,Math.round(usedNeuro/QUOTA_NEURO*100))+'%';
+
+  // Pie chart — Sx vs Neuro
+  var pc=document.getElementById('pie-chart');
+  var ctx=pc.getContext('2d');
+  pc.width=120;pc.height=120;
+  ctx.clearRect(0,0,120,120);
+  var total=used||1;
+  var slices=[
+    {val:usedSx,color:'#e08e6d',label:'⬜ Sx'},
+    {val:usedNeuro,color:'#e9c46a',label:'🟨 Neuro'},
+    {val:free,color:'#e2eaed',label:'🟢 ว่าง'}
+  ];
+  var angle=-Math.PI/2;
+  slices.forEach(function(s){
+    var sweep=(s.val/(totB||1))*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(60,60);
+    ctx.arc(60,60,54,angle,angle+sweep);
+    ctx.closePath();ctx.fillStyle=s.color;ctx.fill();
+    angle+=sweep;
+  });
+  // donut hole
+  ctx.beginPath();ctx.arc(60,60,28,0,Math.PI*2);ctx.fillStyle='white';ctx.fill();
+  ctx.fillStyle='#c85a3f';ctx.font='bold 16px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(used,60,58);
+  ctx.font='10px Sarabun,sans-serif';ctx.fillStyle='#a17a68';ctx.fillText('admit',60,72);
+  // legend
+  document.getElementById('pie-legend').innerHTML=slices.map(function(s){
+    return'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+
+      '<div style="width:14px;height:14px;border-radius:4px;background:'+s.color+';flex-shrink:0"></div>'+
+      '<span style="font-size:13px;font-weight:700;color:#5c3a2e">'+s.label+'</span>'+
+      '<span style="margin-left:auto;font-weight:900;font-size:14px;color:#c85a3f">'+s.val+'</span></div>';
+  }).join('');
+
+  // Queue status bars
+  var qTotal=qs.length||1;
+  var qBars=[
+    {label:'✅ ได้เตียง',n:qConf,color:'#e08e6d'},
+    {label:'🕐 รอยืนยัน',n:qWait,color:'#e9c46a'},
+    {label:'❌ เต็ม',n:qFull,color:'#e06464'},
+    {label:'🚫 ยกเลิก',n:qCancel,color:'#94a3b8'}
+  ];
+  document.getElementById('dash-queue-bars').innerHTML=qBars.map(function(b){
+    var pct=Math.round(b.n/qTotal*100);
+    return'<div style="margin-bottom:10px">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
+      '<span style="font-size:13px;font-weight:700;color:#5c3a2e">'+b.label+'</span>'+
+      '<span style="font-size:13px;font-weight:800;color:'+b.color+'">'+b.n+' ราย</span></div>'+
+      '<div style="height:10px;background:#fdf5f0;border-radius:99px;overflow:hidden">'+
+      '<div style="height:100%;width:'+pct+'%;background:'+b.color+';border-radius:99px;transition:width .5s"></div></div></div>';
+  }).join('');
+
+  // Bar chart — next 7 days bookings
+  var bc=document.getElementById('bar-chart');
+  var bctx=bc.getContext('2d');
+  var W=bc.offsetWidth||300; bc.width=W; bc.height=160;
+  bctx.clearRect(0,0,W,160);
+  var days=[],labels=[];
+  for(var i=0;i<7;i++){
+    var d=new Date(); d.setDate(d.getDate()+i);
+    var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    var cnt=qs.filter(function(q){return toISO(q.date)===iso&&q.status!=='ยกเลิก';}).length;
+    days.push(cnt);
+    labels.push(DA[d.getDay()]+' '+d.getDate());
+  }
+  var maxVal=Math.max.apply(null,days)||1;
+  var barW=Math.floor((W-40)/7)-6;
+  var padL=20,padB=28,chartH=160-padB-10;
+  days.forEach(function(v,i){
+    var x=padL+i*(barW+6);
+    var h=Math.round(v/maxVal*chartH);
+    var y=10+chartH-h;
+    bctx.fillStyle=i===0?'#e08e6d':'#eecbb8';
+    bctx.beginPath();
+    bctx.roundRect(x,y,barW,h,4);
+    bctx.fill();
+    bctx.fillStyle='#a17a68';bctx.font='10px Sarabun';bctx.textAlign='center';
+    bctx.fillText(labels[i],x+barW/2,155);
+    if(v>0){bctx.fillStyle='#c85a3f';bctx.font='bold 11px monospace';bctx.fillText(v,x+barW/2,y-4);}
+  });
+
+  // Ward breakdown
+  var wardCount={};
+  qs.forEach(function(q){if(q.status!=='ยกเลิก'){wardCount[q.ward]=(wardCount[q.ward]||0)+1;}});
+  var wardSorted=Object.keys(wardCount).sort(function(a,b){return wardCount[b]-wardCount[a];}).slice(0,6);
+  var maxW=wardSorted.length?wardCount[wardSorted[0]]:1;
+  document.getElementById('dash-ward-list').innerHTML=wardSorted.length?wardSorted.map(function(w,i){
+    var pct=Math.round(wardCount[w]/maxW*100);
+    return'<div style="margin-bottom:10px">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
+      '<span style="font-size:13px;font-weight:600;color:#5c3a2e">'+(i+1)+'. '+w+'</span>'+
+      '<span style="font-size:13px;font-weight:800;color:#e08e6d">'+wardCount[w]+' ราย</span></div>'+
+      '<div style="height:8px;background:#fdf5f0;border-radius:99px;overflow:hidden">'+
+      '<div style="height:100%;width:'+pct+'%;background:#e08e6d;border-radius:99px"></div></div></div>';
+  }).join(''):'<div style="text-align:center;color:#94a3b8;padding:20px">ยังไม่มีข้อมูล</div>';
+}
+function setFi(f,btn){fi=f;document.querySelectorAll('.qfb').forEach(function(b){b.className='qfb';});btn.className='qfb on';renderQueues();}
+function openOv(html){closeOv();var ov=document.createElement('div');ov.className='ov';ov.id='mainov';var sh=document.createElement('div');sh.className='sh';sh.innerHTML=html;ov.appendChild(sh);ov.addEventListener('click',function(e){if(e.target===ov)closeOv();});document.body.appendChild(ov);document.body.style.overflow='hidden';}
+function closeOv(){var s=document.getElementById('mainov');if(s)s.remove();document.body.style.overflow='';}
+function closeDet(){document.getElementById('detbg').style.display='none';document.getElementById('detsheet').style.transform='translateX(-50%) translateY(100%)';document.body.style.overflow='';}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.className='toast s';setTimeout(function(){t.className='toast';},3000);}
+
+function showExport(){
+  var now=new Date();
+  var mo=String(now.getMonth()+1).padStart(2,'0');
+  var yr=now.getFullYear();
+  var MOS=['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  var opts='';
+  for(var i=1;i<=12;i++){opts+='<option value="'+String(i).padStart(2,'0')+'" '+(String(i).padStart(2,'0')===mo?'selected':'')+'>'+MOS[i]+'</option>';}
+  var h='<div class="hdl"></div><div class="sp">';
+  h+='<div style="background:linear-gradient(135deg,#c85a3f,#e08e6d);border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:10px"><div style="font-size:26px">📊</div><div><div style="color:white;font-weight:800;font-size:16px">ออกรายงานรายเดือน</div><div style="color:#f3c4ac;font-size:12px;margin-top:2px">สรุปยอด Admit / Discharge ICU Trauma</div></div></div>';
+  h+='<label class="fl">📅 เลือกเดือน</label>';
+  h+='<div style="display:flex;gap:8px"><select class="fi" id="exp-mo" style="flex:2">'+opts+'</select><select class="fi" id="exp-yr" style="flex:1"><option value="'+yr+'">'+yr+'</option><option value="'+(yr-1)+'">'+(yr-1)+'</option><option value="'+(yr-2)+'">'+(yr-2)+'</option></select></div>';
+  h+='<div id="exp-preview" style="margin-top:12px"></div>';
+  h+='<button class="subbtn" onclick="loadReport()" style="margin-top:14px">🔍 ดูข้อมูล</button>';
+  h+='<div id="exp-btns" style="display:none;gap:8px;margin-top:10px">';
+  h+='<button onclick="exportExcel()" style="flex:1;padding:12px;border-radius:10px;border:none;background:#1d6f42;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-bottom:8px">📗 Download Excel (.xlsx)</button>';
+  h+='<button onclick="exportPDF()" style="flex:1;padding:12px;border-radius:10px;border:none;background:#c04040;color:white;font-size:14px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;width:100%">📕 Download PDF</button>';
+  h+='</div>';
+  h+='<button class="canbtn" onclick="closeOv()">ปิด</button></div>';
+  openOv(h);
+  window._reportData=null;
+}
+
+function loadReport(){
+  var mo=document.getElementById('exp-mo').value;
+  var yr=document.getElementById('exp-yr').value;
+  var prev=document.getElementById('exp-preview');
+  prev.innerHTML='<div style="text-align:center;padding:16px;color:#a17a68">กำลังโหลด...</div>';
+  fetch(API+'?action=getMonthlyReport&month='+mo+'&year='+yr)
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d.ok){prev.innerHTML='<div style="color:#c04040;font-size:13px;padding:12px;background:#fee8e8;border-radius:10px">'+（d.err||'เกิดข้อผิดพลาด')+'</div>';return;}
+      window._reportData=d;
+      var MOS=['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+      var s=d.summary;
+      var html='<div style="background:#fdf5f0;border-radius:12px;padding:14px;margin-top:4px">';
+      html+='<div style="font-weight:800;font-size:14px;color:#c85a3f;margin-bottom:10px">📊 สรุปเดือน'+MOS[parseInt(mo)]+' '+yr+'</div>';
+      html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+      html+=box('🏥 Admit ทั้งหมด',s.totalAdmit+' ราย','#fdf1ea','#d97757');
+      html+=box('🏠 Discharge ทั้งหมด',s.totalDischarge+' ราย','#fdf6e3','#8a6a10');
+      html+=box('⬜ Sx',s.bySx+' ราย','#f1f5f9','#475569');
+      html+=box('🟨 Neuro Sx',s.byNeuro+' ราย','#fef9c3','#854d0e');
+      html+=box('📅 LOS เฉลี่ย',s.avgLOS+' วัน','#fdf7f3','#e08e6d');
+      var topDest=Object.keys(s.byDestWard).sort(function(a,b){return s.byDestWard[b]-s.byDestWard[a];})[0];
+      html+=box('🏢 ย้ายไปมากสุด',(topDest||'-')+(topDest?' ('+s.byDestWard[topDest]+')':''),'#fff8f0','#c47a40');
+      html+='</div></div>';
+      prev.innerHTML=html;
+      document.getElementById('exp-btns').style.display='flex';
+      document.getElementById('exp-btns').style.flexDirection='column';
+    })
+    .catch(function(){prev.innerHTML='<div style="color:#c04040;font-size:13px;padding:12px;background:#fee8e8;border-radius:10px">❌ โหลดไม่ได้ ตรวจสอบการเชื่อมต่อ</div>';});
+}
+
+function box(label,val,bg,color){
+  return'<div style="background:'+bg+';border-radius:10px;padding:10px;text-align:center"><div style="font-size:11px;color:#a17a68;font-weight:700;margin-bottom:4px">'+label+'</div><div style="font-size:18px;font-weight:900;color:'+color+'">'+val+'</div></div>';
+}
+
+function exportExcel(){
+  var d=window._reportData; if(!d){toast('กรุณากด ดูข้อมูล ก่อนค่ะ');return;}
+  var mo=document.getElementById('exp-mo').value;
+  var yr=document.getElementById('exp-yr').value;
+  var MOS=['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  var monthName=MOS[parseInt(mo)]+' '+yr;
+  var s=d.summary;
+
+  // สร้าง CSV (Excel เปิดได้)
+  var rows=[];
+  rows.push(['ICU TRAUMA DASHBOARD — รายงานรายเดือน']);
+  rows.push(['โรงพยาบาลยะลา']);
+  rows.push(['เดือน: '+monthName]);
+  rows.push(['วันที่ออกรายงาน: '+new Date().toLocaleDateString('th-TH')]);
+  rows.push([]);
+  rows.push(['=== สรุปยอด ===']);
+  rows.push(['รายการ','จำนวน']);
+  rows.push(['Admit ทั้งหมด',s.totalAdmit]);
+  rows.push(['Discharge ทั้งหมด',s.totalDischarge]);
+  rows.push(['Sx',s.bySx]);
+  rows.push(['Neuro Sx',s.byNeuro]);
+  rows.push(['LOS เฉลี่ย (วัน)',s.avgLOS]);
+  rows.push([]);
+  rows.push(['Ward ปลายทาง','จำนวน']);
+  Object.keys(s.byDestWard).forEach(function(k){rows.push([k,s.byDestWard[k]]);});
+  rows.push([]);
+  rows.push(['=== รายการ ADMIT ===']);
+  rows.push(['วันที่ Admit','ชื่อผู้ป่วย','HN','Ward','Dx','Operation','แพทย์','ประเภท','เตียง']);
+  d.admits.forEach(function(a){rows.push([a.admitDate,a.patient,a.hn,a.ward,a.dx,a.op,a.doc,a.bedType,a.bed]);});
+  rows.push([]);
+  rows.push(['=== รายการ DISCHARGE ===']);
+  rows.push(['วันที่ Discharge','ชื่อผู้ป่วย','HN','Ward เดิม','Dx','ย้ายไป','LOS (วัน)']);
+  d.discharges.forEach(function(a){rows.push([a.dischargeDate,a.patient,a.hn,a.ward,a.dx,a.destWard,a.los]);});
+
+  var csv=rows.map(function(r){return r.map(function(c){return'"'+(c===null||c===undefined?'':String(c).replace(/"/g,'""'))+'"';}).join(',');}).join('\r\n');
+  var bom='\uFEFF';
+  var blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download='ICU_Trauma_รายงาน_'+monthName.replace(' ','_')+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  toast('📗 ดาวน์โหลด Excel แล้วค่ะ');
+}
+
+function exportPDF(){
+  var d=window._reportData; if(!d){toast('กรุณากด ดูข้อมูล ก่อนค่ะ');return;}
+  var mo=document.getElementById('exp-mo').value;
+  var yr=document.getElementById('exp-yr').value;
+  var MOS=['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  var monthName=MOS[parseInt(mo)]+' '+yr;
+  var s=d.summary;
+
+  var admitRows=d.admits.map(function(a,i){
+    return'<tr><td>'+(i+1)+'</td><td>'+a.admitDate+'</td><td>'+a.patient+'</td><td>'+a.hn+'</td><td>'+a.ward+'</td><td>'+a.dx+'</td><td>'+a.bedType+'</td><td>'+a.bed+'</td></tr>';
+  }).join('');
+  var discRows=d.discharges.map(function(a,i){
+    return'<tr><td>'+(i+1)+'</td><td>'+a.dischargeDate+'</td><td>'+a.patient+'</td><td>'+a.hn+'</td><td>'+a.ward+'</td><td>'+a.destWard+'</td><td>'+a.los+'</td></tr>';
+  }).join('');
+  var destWardRows=Object.keys(s.byDestWard).map(function(k){return'<tr><td>'+k+'</td><td>'+s.byDestWard[k]+' ราย</td></tr>';}).join('');
+
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>รายงาน ICU Trauma '+monthName+'</title><style>'+
+    'body{font-family:Sarabun,sans-serif;padding:30px;font-size:13px;color:#5c3a2e}'+
+    'h1{color:#c85a3f;font-size:20px;margin-bottom:4px}'+
+    'h2{color:#d97757;font-size:15px;margin:20px 0 8px;border-bottom:2px solid #e8a186;padding-bottom:4px}'+
+    '.sub{color:#a17a68;font-size:12px;margin-bottom:20px}'+
+    '.stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}'+
+    '.stat-box{flex:1;min-width:100px;background:#fdf5f0;border-radius:8px;padding:10px;text-align:center;border:1px solid #f0d9cc}'+
+    '.stat-num{font-size:24px;font-weight:900;color:#c85a3f}'+
+    '.stat-lbl{font-size:11px;color:#a17a68;margin-top:3px}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px}'+
+    'th{background:#c85a3f;color:white;padding:7px 10px;text-align:left;font-weight:700}'+
+    'td{padding:6px 10px;border-bottom:1px solid #e2eaed}'+
+    'tr:nth-child(even) td{background:#f8fafb}'+
+    '.footer{margin-top:30px;padding-top:12px;border-top:1px solid #e2eaed;font-size:11px;color:#94a3b8;text-align:center}'+
+    '@media print{body{padding:15px}}'+
+    '</style></head><body>';
+  html+='<h1>🏥 ICU Trauma Dashboard — รายงานรายเดือน</h1>';
+  html+='<div class="sub">โรงพยาบาลยะลา &nbsp;|&nbsp; เดือน'+monthName+' &nbsp;|&nbsp; ออกรายงาน: '+new Date().toLocaleDateString('th-TH')+'</div>';
+  html+='<h2>สรุปยอดประจำเดือน</h2>';
+  html+='<div class="stats">';
+  html+='<div class="stat-box"><div class="stat-num">'+s.totalAdmit+'</div><div class="stat-lbl">🏥 Admit ทั้งหมด</div></div>';
+  html+='<div class="stat-box"><div class="stat-num">'+s.totalDischarge+'</div><div class="stat-lbl">🏠 Discharge ทั้งหมด</div></div>';
+  html+='<div class="stat-box"><div class="stat-num">'+s.bySx+'</div><div class="stat-lbl">⬜ Sx</div></div>';
+  html+='<div class="stat-box"><div class="stat-num">'+s.byNeuro+'</div><div class="stat-lbl">🟨 Neuro Sx</div></div>';
+  html+='<div class="stat-box"><div class="stat-num">'+s.avgLOS+'</div><div class="stat-lbl">📅 LOS เฉลี่ย (วัน)</div></div>';
+  html+='</div>';
+  if(destWardRows){html+='<h2>Ward ปลายทาง</h2><table><tr><th>Ward</th><th>จำนวน</th></tr>'+destWardRows+'</table>';}
+  html+='<h2>รายการ Admit ('+d.admits.length+' ราย)</h2>';
+  html+='<table><tr><th>#</th><th>วันที่</th><th>ชื่อผู้ป่วย</th><th>HN</th><th>Ward</th><th>Dx</th><th>ประเภท</th><th>เตียง</th></tr>'+admitRows+'</table>';
+  html+='<h2>รายการ Discharge ('+d.discharges.length+' ราย)</h2>';
+  html+='<table><tr><th>#</th><th>วันที่</th><th>ชื่อผู้ป่วย</th><th>HN</th><th>Ward เดิม</th><th>ย้ายไป</th><th>LOS (วัน)</th></tr>'+discRows+'</table>';
+  html+='<div class="footer">ICU Trauma Dashboard — โรงพยาบาลยะลา | สร้างโดยระบบอัตโนมัติ</div>';
+  html+='<script>window.onload=function(){window.print()}<\/script></body></html>';
+
+  var w=window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();}
+  else{toast('❌ กรุณาอนุญาต popup ก่อนค่ะ');}
+}
+  var ov=document.createElement('div');
+  ov.id='success-ov';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(13,79,79,.45);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML=
+    '<div style="background:white;border-radius:24px;padding:32px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:popIn .3s cubic-bezier(.34,1.56,.64,1)">' +
+    '<div style="width:72px;height:72px;background:#fdf1ea;border-radius:99px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;border:3px solid #eecbb8">' +
+    '<div style="width:48px;height:48px;background:#e08e6d;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:24px;color:white">✓</div></div>' +
+    '<div style="font-weight:800;font-size:20px;color:#5c3a2e;margin-bottom:8px">'+title+'</div>' +
+    '<div style="font-size:14px;color:#a17a68;margin-bottom:24px;line-height:1.6">'+msg+'</div>' +
+    '<button onclick="closeSuccess()" style="width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#d97757,#e08e6d);color:white;font-size:15px;font-weight:800;cursor:pointer;font-family:Sarabun,sans-serif">ตกลง</button>' +
+    '</div>';
+  window._successCb=onOk||null;
+  document.body.appendChild(ov);
+}
+function closeSuccess(){
+  var ov=document.getElementById('success-ov');if(ov)ov.remove();
+  if(window._successCb){window._successCb();window._successCb=null;}
+}
+</script>
+</body>
+</html>
